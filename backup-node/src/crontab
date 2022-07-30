@@ -1,0 +1,24 @@
+# Crontab fields: 
+#   (1) minute (0 to 59)
+#   (2) hour (0 to 23)
+#   (3) day of month ( 1 to 31)
+#   (4) month (1 to 12)
+#   (5) day of week (0 to 6 where Sunday = 0)
+#
+# Examples:
+#   https://crontab.guru/examples.html
+#
+#
+# vs UTC
+#   EST = -5
+#   EDT = -4
+#
+#
+# The git backup script runs every day at 0730 UTC = 0230 EST / 0330 EDT.  So run this script 30 minutes after the last possible time (0330 EDT), so at 0400 EDT.  Assume the the backup-node (machine running this script) is configured for eastern time zone.
+#
+# run every day at 0400
+00 4 * * * /path/to/scripts/git-backup.sh
+#
+#
+# Cron requires a blank line below!  Some editors remove trailing blank lines.
+
