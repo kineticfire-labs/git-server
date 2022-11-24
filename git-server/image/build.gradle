@@ -11,6 +11,5 @@ def imageVersion = '1.1.0'
 
 docker {
    name registry + '/' + imageName + ':' + imageVersion
-   copySpec.from( "src/main/docker" ).into( "" )
-   noCache true
+   copySpec.from( "src/main/docker-image" ).into( "" )
 }

@@ -1,0 +1,15 @@
+
+plugins {
+   id 'com.palantir.docker' version '0.34.0'
+}
+
+
+def registry = 'kineticfire'
+def imageName = 'git-server-test-client'
+def imageVersion = '1.0.0'
+
+
+docker {
+   name registry + '/' + imageName + ':' + imageVersion
+   copySpec.from( "src/main/docker-image" ).into( "" )
+}
