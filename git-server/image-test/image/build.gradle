@@ -4,9 +4,13 @@ plugins {
 }
 
 
-def registry = 'kineticfire'
-def imageName = 'git-server-test-client'
-def imageVersion = '1.0.0'
+apply from: "$rootProject.projectDir/git-server/project.cfg"
+apply from: 'project.cfg'
+
+
+def registry = registry_name
+def imageName = gitClient_imageName
+def imageVersion = gitClient_imageVersion
 
 
 docker {

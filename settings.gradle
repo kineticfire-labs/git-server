@@ -8,4 +8,8 @@
  */
 
 rootProject.name = 'git-server'
-include( 'git-server:image', 'git-server:image-test:image' )
+include(
+         'git-server:image',
+         'git-server:image-test:image',
+         'git-server:image-test:compose'
+       )

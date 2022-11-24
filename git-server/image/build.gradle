@@ -4,12 +4,17 @@ plugins {
 }
 
 
-def registry = 'kineticfire'
-def imageName = 'git-server'
-def imageVersion = '1.1.0'
+apply from: "$rootProject.projectDir/git-server/project.cfg"
+apply from: 'project.cfg'
+
+
+def registry = registry_name
+def imageName = gitServer_imageName
+def imageVersion = gitServer_imageVersion
 
 
 docker {
    name registry + '/' + imageName + ':' + imageVersion
    copySpec.from( "src/main/docker-image" ).into( "" )
 }
+

@@ -1,19 +1,27 @@
 
 plugins {
-   id 'com.palantir.docker' version '0.34.0'
+   id 'com.palantir.docker-compose' version '0.34.0'
 }
 
-/*
 
-def registry = 'kineticfire'
-def imageName = 'git-server'
-def imageVersion = '1.1.0'
+apply from: "$rootProject.projectDir/git-server/project.cfg"
+apply from: "$rootProject.projectDir/git-server/image/project.cfg"
+apply from: "$rootProject.projectDir/git-server/image-test/image/project.cfg"
+
+def registry = registry_name
+// gitServer_imageName
+// gitServer_imageVersion
+// gitClient_imageName
+// gitClient_imageVersion
 
 
-docker {
-   name registry + '/' + imageName + ':' + imageVersion
-   copySpec.from( "src/main/docker-image" ).into( "" )
-   noCache true
+
+dependencies {
+   docker 'kineticfire:git-server:1.2.0'
+   docker 'kineticfire:git-server-test-client:1.0.0'
 }
 
-*/
+
+dockerCompose {
+   dockerComposeFile 'docker-compose.yml'
+}

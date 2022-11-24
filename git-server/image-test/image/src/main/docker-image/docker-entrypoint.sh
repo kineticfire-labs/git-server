@@ -14,7 +14,7 @@ fi
 if [ -z "$GIT_USER_FIRST_NAME" ]; then
    gitUserFirstName=John
 else
-   gitUserUid=$GIT_USER_FIRST_NAME
+   gitUserFirstName=$GIT_USER_FIRST_NAME
 fi
 
 if [ -z "$GIT_USER_LAST_NAME" ]; then
