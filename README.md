@@ -53,5 +53,5 @@ Note:  To remove the crontab, use crontab -r
 
 
 # License
-- This image is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- This project is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - git is released under [GNU General Public License version 2](https://opensource.org/licenses/GPL-2.0)

@@ -4,8 +4,8 @@ plugins {
 }
 
 
-apply from: "$rootProject.projectDir/git-server/project.cfg"
-apply from: 'project.cfg'
+apply from: "$rootProject.projectDir/git-server/project.properties"
+apply from: 'project.properties'
 
 
 def registry = registry_name
@@ -17,4 +17,6 @@ docker {
    name registry + '/' + imageName + ':' + imageVersion
    copySpec.from( "src/main/docker-image" ).into( "" )
 }
+
+
 

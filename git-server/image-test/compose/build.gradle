@@ -4,9 +4,9 @@ plugins {
 }
 
 
-apply from: "$rootProject.projectDir/git-server/project.cfg"
-apply from: "$rootProject.projectDir/git-server/image/project.cfg"
-apply from: "$rootProject.projectDir/git-server/image-test/image/project.cfg"
+apply from: "$rootProject.projectDir/git-server/project.properties"
+apply from: "$rootProject.projectDir/git-server/image/project.properties"
+apply from: "$rootProject.projectDir/git-server/image-test/image/project.properties"
 
 def registry = registry_name
 // gitServer_imageName
@@ -16,12 +16,74 @@ def registry = registry_name
 
 
 
-dependencies {
-   docker 'kineticfire:git-server:1.2.0'
-   docker 'kineticfire:git-server-test-client:1.0.0'
+dockerCompose {
+   dockerComposeFile 'build/docker-compose.yml'
 }
 
 
-dockerCompose {
-   dockerComposeFile 'docker-compose.yml'
+
+tasks.register( 'test_ordering_prepImages' ) {
+   dependsOn = [
+                ':git-server:image:docker',
+                ':git-server:image-test:image:docker'
+               ]
+}
+
+
+tasks.register( 'test_ordering_prepComposeUp' ) {
+   dependsOn ':git-server:image-test:compose:dockerComposeUp'
+   mustRunAfter 'test_ordering_prepImages'
+}
+
+
+tasks.register( 'test' ) {
+
+   dependsOn = [
+                'test_ordering_prepImages',
+                'test_ordering_prepComposeUp'
+               ]
+
+   //finalizedBy ':git-server:image-test:compose:dockerComposeDown'
+
+   doLast {
+
+       delete 'build/'
+
+       delete 'deploy/'
+       mkdir 'deploy/'
+
+       def gitServer_repoPath = file( 'deploy' ).absolutePath + '/repo'
+       def gitServer_dataPath = file( 'deploy' ).absolutePath + '/data'
+
+       def username = System.properties['user.name']
+       def uid = ["id", "-u", username].execute().text.trim()
+
+       copy {
+         from 'src/main/docker-compose'
+         include '*.yml'
+         into 'build/'
+         expand( [
+                  registry: registry,
+                  gitServer_imageName: gitServer_imageName,
+                  gitServer_imageVersion: gitServer_imageVersion,
+                  gitServer_uid: uid,
+                  gitServer_repoPath: gitServer_repoPath,
+                  gitServer_dataPath: gitServer_dataPath,
+                  gitClient_imageName: gitClient_imageName,
+                  gitClient_imageVersion: gitClient_imageVersion
+                 ] ) 
+       }
+
+
+   }
+
+
+}
+
+
+
+
+configure( test ) {   
+    group = 'Test'
+    description = 'Publish source code to output directory'
 }

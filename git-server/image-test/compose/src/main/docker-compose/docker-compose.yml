@@ -1,0 +1,26 @@
+version: '3.7'
+
+
+services:
+
+  git-server:
+    image: ${registry}/${gitServer_imageName}:${gitServer_imageVersion}
+    container_name: git-server
+    environment:
+        - GIT_USER_UID=${gitServer_uid}
+    volumes:
+        - ${gitServer_repoPath}:/srv/git
+        - ${gitServer_dataPath}:/data
+
+  git-client-john:
+    image: ${registry}/${gitClient_imageName}:${gitClient_imageVersion}
+    container_name: git-client-john
+
+  git-client-jane:
+    image: ${registry}/${gitClient_imageName}:${gitClient_imageVersion}
+    container_name: git-client-jane
+    environment:
+        - GIT_USER_UID=5001
+        - GIT_USER_FIRST_NAME=Jane
+        - GIT_USER_LAST_NAME=Eod
+        - GIT_USER_EMAIL_ADDRESS="Jane Eod"

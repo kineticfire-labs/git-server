@@ -4,8 +4,6 @@ version: '3.7'
 services:
 
   git-server:
-    ports:
-      - 9418:9418
     volumes:
       - @filter-token-local-deploy-home@/devops/@filter-token-release@/docker-related/support/primary/docker-data/git/repos:/srv/git
       - @filter-token-local-deploy-home@/devops/@filter-token-release@/docker-related/support/primary/docker-data/git/data:/data
