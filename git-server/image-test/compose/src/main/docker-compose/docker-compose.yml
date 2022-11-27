@@ -23,4 +23,4 @@ services:
         - GIT_USER_UID=5001
         - GIT_USER_FIRST_NAME=Jane
         - GIT_USER_LAST_NAME=Eod
-        - GIT_USER_EMAIL_ADDRESS="Jane Eod"
+        - GIT_USER_EMAIL_ADDRESS="jane.eod@example.com"

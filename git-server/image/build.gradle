@@ -20,3 +20,12 @@ docker {
 
 
 
+tasks.register( 'build' ) {
+   dependsOn ':git-server:image:docker'
+}
+
+
+configure( build ) {
+    group = 'git-server'
+    description = 'Builds the git-server.  Builds git-server Docker image.'
+}

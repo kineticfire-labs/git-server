@@ -8,11 +8,12 @@ apply from: "$rootProject.projectDir/git-server/project.properties"
 apply from: "$rootProject.projectDir/git-server/image/project.properties"
 apply from: "$rootProject.projectDir/git-server/image-test/image/project.properties"
 
-def registry = registry_name
-// gitServer_imageName
-// gitServer_imageVersion
-// gitClient_imageName
-// gitClient_imageVersion
+// from properties files above:
+   def registry = registry_name
+   // gitServer_imageName
+   // gitServer_imageVersion
+   // gitClient_imageName
+   // gitClient_imageVersion
 
 
 
@@ -22,41 +23,19 @@ dockerCompose {
 
 
 
-tasks.register( 'test_ordering_prepImages' ) {
-   dependsOn = [
-                ':git-server:image:docker',
-                ':git-server:image-test:image:docker'
-               ]
-}
-
-
-tasks.register( 'test_ordering_prepComposeUp' ) {
-   dependsOn ':git-server:image-test:compose:dockerComposeUp'
-   mustRunAfter 'test_ordering_prepImages'
-}
-
-
-tasks.register( 'test' ) {
-
-   dependsOn = [
-                'test_ordering_prepImages',
-                'test_ordering_prepComposeUp'
-               ]
-
-   //finalizedBy ':git-server:image-test:compose:dockerComposeDown'
-
-   doLast {
+tasks.register( 'prepComposeFile' ) {
 
        delete 'build/'
 
-       delete 'deploy/'
-       mkdir 'deploy/'
+       delete 'test-deploy/'
+       mkdir 'test-deploy/git-server/'
 
-       def gitServer_repoPath = file( 'deploy' ).absolutePath + '/repo'
-       def gitServer_dataPath = file( 'deploy' ).absolutePath + '/data'
+       def projectDir = project(':git-server:image-test:compose').getProjectDir( ).getAbsolutePath( )
+       def gitServer_repoPath = projectDir + "/test-deploy/git-server/repo"
+       def gitServer_dataPath = projectDir + "/test-deploy/git-server/data"
 
-       def username = System.properties['user.name']
-       def uid = ["id", "-u", username].execute().text.trim()
+       def username = System.properties[ 'user.name' ]
+       def uid = [ "id", "-u", username ].execute( ).text.trim( )
 
        copy {
          from 'src/main/docker-compose'
@@ -73,7 +52,29 @@ tasks.register( 'test' ) {
                   gitClient_imageVersion: gitClient_imageVersion
                  ] ) 
        }
+}
 
+
+tasks.register( 'test' ) {
+
+   dependsOn = [
+                ':git-server:image:docker',
+                ':git-server:image-test:image:docker',
+                'prepComposeFile',
+                ':git-server:image-test:compose:dockerComposeUp'
+               ]
+
+   project.getTasks( ).getByPath( ':git-server:image-test:compose:dockerComposeUp' ).mustRunAfter( ':git-server:image:docker' )
+   project.getTasks( ).getByPath( ':git-server:image-test:compose:dockerComposeUp' ).mustRunAfter( ':git-server:image-test:image:docker' )
+   project.getTasks( ).getByPath( ':git-server:image-test:compose:dockerComposeUp' ).mustRunAfter( 'prepComposeFile' )
+
+
+   finalizedBy ':git-server:image-test:compose:dockerComposeDown'
+
+
+   doLast {
+
+      println "todo-- run tests here"
 
    }
 
@@ -82,8 +83,9 @@ tasks.register( 'test' ) {
 
 
 
-
 configure( test ) {   
-    group = 'Test'
-    description = 'Publish source code to output directory'
+    group = 'git-server'
+    description = 'Tests the git-server.  Builds test Docker image (and git-server image, if necessary) and executes tests.'
 }
+
+
