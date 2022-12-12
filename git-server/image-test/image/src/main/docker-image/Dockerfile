@@ -39,22 +39,17 @@ RUN set -eux; \
 
 
 
-RUN \
-    mkdir -p /repos; \
-    mkdir -p /test/scripts; \
-    mkdir -p /test/results
-COPY test.sh /test/scripts
-
 
 COPY docker-entrypoint.sh /
+
 RUN \
     chmod 770 /docker-entrypoint.sh; \
-    chmod 770 -R /test
+    mkdir /repos
 
-WORKDIR /test/scripts
+WORKDIR /repos
 
 
-CMD [ "/bin/ash", "/test/scripts/test.sh" ]
+CMD [ "tail", "-f", "/dev/null" ]
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

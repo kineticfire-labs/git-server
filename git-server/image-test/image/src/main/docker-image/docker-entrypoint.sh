@@ -38,9 +38,8 @@ git config --global user.email $gitUserEmailAddress
 git config --global core.editor vim
 
 
-if [ "$1" = '/test/scripts/test.sh' ]; then
+if [ "$1" = 'tail' ]; then
    chown -R git:git /repos
-   chown -R git:git /test
    exec gosu git "$@"
 fi
 

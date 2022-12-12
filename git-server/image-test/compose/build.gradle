@@ -69,12 +69,81 @@ tasks.register( 'test' ) {
    project.getTasks( ).getByPath( ':git-server:image-test:compose:dockerComposeUp' ).mustRunAfter( 'prepComposeFile' )
 
 
-   finalizedBy ':git-server:image-test:compose:dockerComposeDown'
+   //finalizedBy ':git-server:image-test:compose:dockerComposeDown'
 
 
    doLast {
 
-      println "todo-- run tests here"
+      // ***************************
+      // ***************************
+      // WAIT FOR CONTAINERS 'RUNNING'
+
+      // Wait for containers to run (e.g. reach 'running' state)
+
+      Set<String> containerSet = new HashSet<String>( )
+      containerSet.add( "git-server" )
+      containerSet.add( "git-client-john" )
+      containerSet.add( "git-client-jane" )
+      Map<String, String> result = waitForContainerStateRunning( containerSet )
+
+      // throw error if containers fail to reach 'running' state (num retries or 'exited' state)
+      if ( !result.get( 'success' ) ) {
+
+         Throwable t;
+
+         if ( result.get( 'reason' ).equalsIgnoreCase( 'Container exited' ) ) {
+            t = new Throwable( "Container '" + result.get( 'container' ) + "' exited." )
+         } else if ( result.get( 'reason' ).equalsIgnoreCase( 'Num retries' ) ) {
+            t = new Throwable( "Number of retries exceeded with container '" + result.get( 'container' ) + "'." )
+         } else {
+            t = new Throwable( result.get( 'result' ) )
+         }
+
+         throw new GradleScriptException( "Error starting containers", t )
+      }
+
+
+      // ***************************
+      // ***************************
+      // CREATE REPOS
+
+
+      // create repo A
+
+      Map<String, String> data = exec( "docker exec git-server /git-create-repo.sh testRepoA" )
+
+      if ( data.get( "exitValue" ) != 0 ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoA' returned non-zero exit value of " + data.get( "exitValue" ) + " with error message " + data.get( "err" ) )
+         throw new GradleScriptException( "Error creating repository", t )
+      } else if ( data.get( "out" ).equalsIgnoreCase( "Initialized empty Git repository in /srv/git/testA/" ) ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoA' returned unexpected response of " + data.get( "out" ) )
+         throw new GradleScriptException( "Error creating repository", t )
+      }
+
+
+
+      // create repo B
+
+      data = exec( "docker exec git-server /git-create-repo.sh testRepoB" )
+
+      if ( data.get( "exitValue" ) != 0 ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoB' returned non-zero exit value of " + data.get( "exitValue" ) + " with error message " + data.get( "err" ) )
+         throw new GradleScriptException( "Error creating repository", t )
+      } else if ( data.get( "out" ).equalsIgnoreCase( "Initialized empty Git repository in /srv/git/testA/" ) ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoB' returned unexpected response of " + data.get( "out" ) )
+         throw new GradleScriptException( "Error creating repository", t )
+      }
+
+
+
+
+      // ***************************
+      // ***************************
+      // REPO A: JOHN CLONE
+
+      data = exec( "docker exec --user 5000 git-client-john git clone git://git-server/testRepoA" )
+         // exitValue == 0
+
 
    }
 
@@ -85,7 +154,150 @@ tasks.register( 'test' ) {
 
 configure( test ) {   
     group = 'git-server'
-    description = 'Tests the git-server.  Builds test Docker image (and git-server image, if necessary) and executes tests.'
+    description = 'Tests the git-server.  Builds test Docker image and git-server image and executes tests.'
 }
 
 
+
+
+
+Map<String, String> waitForContainerStateRunning( String container ) {
+   Set<String> containerSet = new HashSet<String>( )
+   containerSet.add( container )
+   return( waitForContainerStateRunning( containerSet ) )
+}
+
+Map<String, String> waitForContainerStateRunning( String container, int retrySeconds, int retryNum ) {
+   Set<String> containerSet = new HashSet<String>( )
+   containerSet.add( container )
+   return( waitForContainerStateRunning( containerSet, retrySeconds, retryNum ) )
+}
+
+
+Map<String, String> waitForContainerStateRunning( Set<String> containerSet ) {
+   return( waitForContainerStateRunning( containerSet, 2, 10 ) )
+}
+
+
+/**
+  * Waits for a set of containers to reach 'running' state.
+  * <p>
+  * Queries for containers' states when the function is called (no initial delay) and, if all containers are not running, then will retry 'retryNum' times waiting 'retrySeconds' between attempts.  If one container has not reached 'running' state, then subsequent retries will always retry all containers with the intent that, although a container reaches 'running' state, it can exit later.
+  * <p>
+  * The containers will be queried until (1) all containers are in a 'running' state, (2) the number of retries was hit, or (3) at least one container exited.
+  * <p>
+  * Even if all containers are detected as running and this function returns 'success', health checks specific to the container service should be performed to ensure the services are available.
+  * <p>
+  * Returns a Map with results with the following keys:
+  * <ul>
+  *   <li>success = boolean true if all containers in a 'running' state and false otherwise</li>
+  *   <li>reason = the reason the operation failed which can be 'Container exited' or 'Num retries'; present only if 'success' is false</li>
+  *   <li>container = the container that exited if reason is 'Container exited' or the first container that didn't start if reason is 'Num retries'; present only if 'success' is false</li>
+  * </ul>
+  *
+  *
+  */
+Map<String, String> waitForContainerStateRunning( Set<String> containerSet, int retrySeconds, int retryNum ) {
+
+   Map<String, String> result = new HashMap<String, String>( )
+   result.put( "success", false )
+
+   boolean done= false
+   int count = 0
+
+   // loop local variables
+   boolean proceed // current container in 'running' state
+   String currentContainer
+   String containerState
+   Map<String, String> queryResult
+
+   while ( !done ) {
+
+      proceed = true
+
+      Iterator it = containerSet.iterator( )
+
+      while ( proceed && it.hasNext( ) ) {
+
+         proceed = false
+
+         currentContainer = it.next( )
+
+         queryResult = getContainerState( currentContainer )
+
+         if ( queryResult.get( "exitValue" ) == 0 ) {
+
+            containerState = queryResult.get( "out" )
+
+            if ( containerState.equalsIgnoreCase( "running" ) ) {
+               proceed = true
+            } else if ( containerState.equalsIgnoreCase( "exited" ) ) {
+               // implicit proceed = false
+               done = true
+               result.put( "reason", "Container exited" )
+               result.put( "container", currentContainer )
+            }  // implicit else with proceed = false
+               // Container is being created or starting.  There are other states which don't apply in this context.
+
+         }
+
+      }
+
+      if ( !done && !it.hasNext( ) && proceed ) {
+         done = true
+         result.put( "success", true )
+      } else if ( done ) {
+         // catches failure cases and data provided above, preventing the next 'else' with 'Num retries' from over-writing
+      } else {
+
+         count++
+
+         if ( count == retryNum + 1 ) {
+            done = true
+            result.put( "reason", "Num retries" )
+            result.put( "container", currentContainer )
+         } else {
+            Thread.sleep( retrySeconds * 1000 )
+         }
+
+      }
+
+   }
+
+
+   return( result )
+}
+
+
+Map<String, String> getContainerState( String container ) {
+
+      Map<String, String> data = exec( "docker inspect --format {{.State.Status}} " + container )
+
+      return( data )
+}
+
+
+Map<String, String> exec( String task ) {
+
+   Map<String, String> result = new HashMap<String, String>( )
+
+   StringBuffer sout = new StringBuffer( )
+   StringBuffer serr = new StringBuffer( )
+
+   Process proc = task.execute( )
+   proc.consumeProcessOutput( sout, serr )
+   proc.waitFor( )
+
+   int exitValue = proc.exitValue( )
+   result.put( 'exitValue', exitValue )
+
+   result.put( 'out', sout.toString( ).trim( ) )
+
+   if ( exitValue < 0 || exitValue > 0 ) {
+      result.put( 'err', serr.toString( ).trim( ) )
+   }
+
+
+   return( result )
+
+}
