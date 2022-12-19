@@ -16,7 +16,8 @@ adduser -u $gitUserUid -D -H git
 
 if [ "$2" = 'daemon' ]; then
 
-    git config --global init.defaultBranch main
+    # using '--system' which sets git config to '/etc/gitconfig' vs. '--global' which sets git config to '~/.gitconfig' because user doesn't have a home directory
+    git config --system init.defaultBranch main
 
     chown -R git:git /srv/git
     chown -R git:git /data
