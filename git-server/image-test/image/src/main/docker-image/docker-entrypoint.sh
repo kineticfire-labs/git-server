@@ -32,10 +32,12 @@ fi
 
 adduser -u $gitUserUid -D -H git
 
-git config --global init.defaultBranch main
-git config --global user.name "$gitUserFirstName $gitUserLastName"
-git config --global user.email $gitUserEmailAddress
-git config --global core.editor vim
+# using '--system' which sets git config to '/etc/gitconfig' vs. '--global' which sets git config to '~/.gitconfig' because user doesn't have a home directory
+
+git config --system init.defaultBranch main
+git config --system user.name "$gitUserFirstName $gitUserLastName"
+git config --system user.email $gitUserEmailAddress
+git config --system core.editor vim
 
 
 if [ "$1" = 'tail' ]; then

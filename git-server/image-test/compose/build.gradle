@@ -69,10 +69,15 @@ tasks.register( 'test' ) {
    project.getTasks( ).getByPath( ':git-server:image-test:compose:dockerComposeUp' ).mustRunAfter( 'prepComposeFile' )
 
 
-   //finalizedBy ':git-server:image-test:compose:dockerComposeDown'
+   finalizedBy ':git-server:image-test:compose:dockerComposeDown'
 
 
    doLast {
+
+      Map<String, String> result
+      String[] cmdArray
+
+
 
       // ***************************
       // ***************************
@@ -84,7 +89,7 @@ tasks.register( 'test' ) {
       containerSet.add( "git-server" )
       containerSet.add( "git-client-john" )
       containerSet.add( "git-client-jane" )
-      Map<String, String> result = waitForContainerStateRunning( containerSet )
+      result = waitForContainerStateRunning( containerSet )
 
       // throw error if containers fail to reach 'running' state (num retries or 'exited' state)
       if ( !result.get( 'success' ) ) {
@@ -110,13 +115,13 @@ tasks.register( 'test' ) {
 
       // create repo A
 
-      Map<String, String> data = exec( "docker exec git-server /git-create-repo.sh testRepoA" )
+      result = exec( "docker exec git-server /git-create-repo.sh testRepoA" )
 
-      if ( data.get( "exitValue" ) != 0 ) {
-         Throwable t = new Throwable( "Creating repository 'testRepoA' returned non-zero exit value of " + data.get( "exitValue" ) + " with error message " + data.get( "err" ) )
+      if ( result.get( "exitValue" ) != 0 ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoA' returned non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
          throw new GradleScriptException( "Error creating repository", t )
-      } else if ( data.get( "out" ).equalsIgnoreCase( "Initialized empty Git repository in /srv/git/testA/" ) ) {
-         Throwable t = new Throwable( "Creating repository 'testRepoA' returned unexpected response of " + data.get( "out" ) )
+      } else if ( !result.get( "out" ).equals( "Initialized empty Git repository in /srv/git/testRepoA/" ) ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoA' returned unexpected response of " + result.get( "out" ) )
          throw new GradleScriptException( "Error creating repository", t )
       }
 
@@ -124,13 +129,13 @@ tasks.register( 'test' ) {
 
       // create repo B
 
-      data = exec( "docker exec git-server /git-create-repo.sh testRepoB" )
+      result = exec( "docker exec git-server /git-create-repo.sh testRepoB" )
 
-      if ( data.get( "exitValue" ) != 0 ) {
-         Throwable t = new Throwable( "Creating repository 'testRepoB' returned non-zero exit value of " + data.get( "exitValue" ) + " with error message " + data.get( "err" ) )
+      if ( result.get( "exitValue" ) != 0 ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoB' returned non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
          throw new GradleScriptException( "Error creating repository", t )
-      } else if ( data.get( "out" ).equalsIgnoreCase( "Initialized empty Git repository in /srv/git/testA/" ) ) {
-         Throwable t = new Throwable( "Creating repository 'testRepoB' returned unexpected response of " + data.get( "out" ) )
+      } else if ( !result.get( "out" ).equals( "Initialized empty Git repository in /srv/git/testRepoB/" ) ) {
+         Throwable t = new Throwable( "Creating repository 'testRepoB' returned unexpected response of " + result.get( "out" ) )
          throw new GradleScriptException( "Error creating repository", t )
       }
 
@@ -139,13 +144,302 @@ tasks.register( 'test' ) {
 
       // ***************************
       // ***************************
-      // REPO A: JOHN CLONE
+      // REPO A: JOHN clone, create file, push
 
-      data = exec( "docker exec --user 5000 git-client-john git clone git://git-server/testRepoA" )
-         // exitValue == 0
 
+      // clone
+
+      result = exec( "docker exec --user git git-client-john git clone git://git-server/testRepoA" )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial clone of repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error cloning repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error cloning repository", t )
+      }
+
+
+      // create file
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not create file "blah.txt" in repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error creating file in repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error creating file", t )
+      }
+
+
+
+      // add file created for staging and commit
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial stage of file "blah.txt" and/or commit in repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error staging file and/or committing file in repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error staging and/or committing file repository", t )
+      }
+
+
+      // push
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git push"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial push of changes for remote repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error pushing updates to remote repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error pushing to remote repository", t )
+      }
+
+
+
+      // ***************************
+      // ***************************
+      // REPO A: JANE clone, create file, edit file, push
+
+
+      // clone
+
+      result = exec( "docker exec --user git git-client-jane git clone git://git-server/testRepoA" )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial clone of repository A for Jane.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error cloning repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error cloning repository", t )
+      }
+
+
+      // create file
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not create file "yada.txt" in repository A for Jane.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error creating file in repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error creating file", t )
+      }
+
+
+      // edit file
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not edit file "blah.txt" in repository A for Jane.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error creating file in repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error creating file", t )
+      }
+
+
+      // add files created and edited for staging and commit
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial stage of files "blah.txt", "yada.txt", and/or commit in repository A for Jane.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error staging file and/or committing file in repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error staging and/or committing file repository", t )
+      }
+
+
+      // push
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git push"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform initial push of changes for remote repository A for Jane.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error pushing updates to remote repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error pushing to remote repository", t )
+      }
+
+
+
+      // ***************************
+      // ***************************
+      // REPO A: JOHN pull, check files/contents
+
+
+      // pull
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git pull"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Could not perform pull of repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error pulling repository with non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error pulling repository", t )
+      }
+
+
+      // files present
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && ls -l blah.txt && ls -l yada.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Expected files not present in repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error expected files not present in repository with ls of files resulsting in non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error expected files not present in repository", t )
+      }
+
+
+      // files have expected contents
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah-expected.txt"]
+      result = exec( cmdArray )
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah-expected.txt"]
+      result = exec( cmdArray )
+
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/blah.txt /repos/testRepoA/blah-expected.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Files with unexpected contents for repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error file contents not as expected for diff of 'blah.txt' and 'blah-expected.txt' resulsting in non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error file contents not expected", t )
+      }
+
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada-expected.txt"]
+      result = exec( cmdArray )
+
+      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/yada.txt /repos/testRepoA/yada-expected.txt"]
+      result = exec( cmdArray )
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = result.get ( 'err' )
+         String msg = 'Files with unexpected contents for repository A for John.'
+
+         if ( err == null ) {
+            err = msg
+         } else {
+            err = err + ' ' + msg
+         }
+
+         Throwable t = new Throwable( "Error file contents not as expected for diff of 'yada.txt' and 'yada-expected.txt' resulsting in non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
+         throw new GradleScriptException( "Error file contents not expected", t )
+      }
 
    }
+
 
 
 }
@@ -278,6 +572,32 @@ Map<String, String> getContainerState( String container ) {
 
 
 Map<String, String> exec( String task ) {
+
+   Map<String, String> result = new HashMap<String, String>( )
+
+   StringBuffer sout = new StringBuffer( )
+   StringBuffer serr = new StringBuffer( )
+
+   Process proc = task.execute( )
+   proc.consumeProcessOutput( sout, serr )
+   proc.waitFor( )
+
+   int exitValue = proc.exitValue( )
+   result.put( 'exitValue', exitValue )
+
+   result.put( 'out', sout.toString( ).trim( ) )
+
+   if ( exitValue < 0 || exitValue > 0 ) {
+      result.put( 'err', serr.toString( ).trim( ) )
+   }
+
+
+   return( result )
+
+}
+
+
+Map<String, String> exec( String[] task ) {
 
    Map<String, String> result = new HashMap<String, String>( )
 
