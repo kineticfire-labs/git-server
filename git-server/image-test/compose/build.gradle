@@ -30,7 +30,7 @@ tasks.register( 'prepComposeFile' ) {
        delete 'test-deploy/'
        mkdir 'test-deploy/git-server/'
 
-       def projectDir = project(':git-server:image-test:compose').getProjectDir( ).getAbsolutePath( )
+       def projectDir = project( ':git-server:image-test:compose' ).getProjectDir( ).getAbsolutePath( )
        def gitServer_repoPath = projectDir + "/test-deploy/git-server/repo"
        def gitServer_dataPath = projectDir + "/test-deploy/git-server/data"
 
@@ -169,7 +169,7 @@ tasks.register( 'test' ) {
 
       // create file
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -191,7 +191,7 @@ tasks.register( 'test' ) {
 
       // add file created for staging and commit
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -212,7 +212,7 @@ tasks.register( 'test' ) {
 
       // push
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git push"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git push" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -259,7 +259,7 @@ tasks.register( 'test' ) {
 
       // create file
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -280,7 +280,7 @@ tasks.register( 'test' ) {
 
       // edit file
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -301,7 +301,7 @@ tasks.register( 'test' ) {
 
       // add files created and edited for staging and commit
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git add . && git commit -m 'Initial commit'" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -322,7 +322,7 @@ tasks.register( 'test' ) {
 
       // push
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git push"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-jane", "/bin/ash", "-c", "cd testRepoA && git push" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -349,7 +349,7 @@ tasks.register( 'test' ) {
 
       // pull
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git pull"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && git pull" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -370,7 +370,7 @@ tasks.register( 'test' ) {
 
       // files present
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && ls -l blah.txt && ls -l yada.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && ls -l blah.txt && ls -l yada.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -391,14 +391,14 @@ tasks.register( 'test' ) {
 
       // files have expected contents
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah-expected.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hi' > /repos/testRepoA/blah-expected.txt" ]
       result = exec( cmdArray )
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah-expected.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'hey' >> /repos/testRepoA/blah-expected.txt" ]
       result = exec( cmdArray )
 
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/blah.txt /repos/testRepoA/blah-expected.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/blah.txt /repos/testRepoA/blah-expected.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -417,10 +417,10 @@ tasks.register( 'test' ) {
       }
 
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada-expected.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'howdy' > /repos/testRepoA/yada-expected.txt" ]
       result = exec( cmdArray )
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/yada.txt /repos/testRepoA/yada-expected.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "diff /repos/testRepoA/yada.txt /repos/testRepoA/yada-expected.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -467,7 +467,7 @@ tasks.register( 'test' ) {
 
       // create file
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'asdf' > /repos/testRepoB/blah.txt"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "echo 'asdf' > /repos/testRepoB/blah.txt" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -489,7 +489,7 @@ tasks.register( 'test' ) {
 
       // add file created for staging and commit
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoB && git add . && git commit -m 'Initial commit'"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoB && git add . && git commit -m 'Initial commit'" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -510,7 +510,7 @@ tasks.register( 'test' ) {
 
       // push
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoB && git push"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoB && git push" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -531,11 +531,11 @@ tasks.register( 'test' ) {
 
       // backup
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-server", "/bin/ash", "-c", "date +%F"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-server", "/bin/ash", "-c", "date +%F" ]
       result = exec( cmdArray )
       String dateBefore = result.get( "out" )
 
-      cmdArray = ["docker", "exec", "--user", "git", "git-server", "/bin/ash", "-c", "/cron/scripts/git-backup.sh"]
+      cmdArray = [ "docker", "exec", "--user", "git", "git-server", "/bin/ash", "-c", "/cron/scripts/git-backup.sh" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
@@ -558,32 +558,69 @@ tasks.register( 'test' ) {
       String dateAfter = result.get( "out" )
 
 
-      // files present
+      // backup all repositories file present
+      // format:  <YYYY-MM-DD>-all-git-repos.tar.gz
 
+      String backupDir = "/test-deploy/git-server/data"
+      String backupFilePostfix = "-all-git-repos.tar.gz"
+      String dateCurrent = dateBefore
+      String backupFile = projectDir.toString( ) + backupDir + "/" + dateCurrent + backupFilePostfix
       def projectDir = project(':git-server:image-test:compose').getProjectDir( ).getAbsolutePath( )
-      cmdArray = ["ls", projectDir + "/test-deploy/git-server/data"]
-      result = exec( cmdArray )
-      String fileFound = result.get( "out" )
 
-      /*
-      cmdArray = ["docker", "exec", "--user", "git", "git-client-john", "/bin/ash", "-c", "cd testRepoA && ls -l blah.txt && ls -l yada.txt"]
+      cmdArray = [ "ls", backupFile  ]
+      result = exec( cmdArray )
+
+
+      if ( result.get( "exitValue" ) != 0 ) {
+
+         String err = "Backup file '" + backupFile + "'"
+
+         if ( !dateBefore.equalsIgnoreCase( dateAfter ) ) {
+            // try 'dateAfter' if that differs from 'dateBefore'
+
+            dateCurrent = dateAfter
+
+            backupFile = projectDir + backupDir + "/" + dateCurrent + backupFilePostfix
+
+            cmdArray = [ "ls", backupFile  ]
+            result = exec( cmdArray )
+
+            if ( result.get( "exitValue" ) != 0 ) {
+               err += " or '" + backupFile + "'"
+            }
+
+         }
+
+            if ( result.get( "exitValue" ) != 0 ) {
+
+            Throwable t = new Throwable( err + " not found." )
+            throw new GradleScriptException( "Error finding backup file", t )
+         }
+
+      }
+
+
+
+      // untar and unzip backup of all repositories file
+      cmdArray = [ "tar", "xfv", backupFile, "-C", "backupDir" ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) != 0 ) {
 
-         String err = result.get ( 'err' )
-         String msg = 'Expected files not present in repository A for John.'
-
-         if ( err == null ) {
-            err = msg
-         } else {
-            err = err + ' ' + msg
-         }
-
-         Throwable t = new Throwable( "Error expected files not present in repository with ls of files resulsting in non-zero exit value of " + result.get( "exitValue" ) + " with error message " + result.get( "err" ) )
-         throw new GradleScriptException( "Error expected files not present in repository", t )
+         Throwable t = new Throwable( "Could not untar and unzip backfile file of all repositories '" + backupFile "'" )
+         throw new GradleScriptException( "Error untarring and unzipping backfile of all repositories", t )
       }
-      */
+
+      String extractDir = backupDir + "/" + dateCurrent + "/-all-git-repos"
+      String backupFileRepoA = extractDir + "/testRepoA-git-repo-" + dateCurrent + ".tar.gz"
+      String backupFileRepoB = extractDir + "/testRepoB-git-repo-" + dateCurrent + ".tar.gz"
+
+
+      // 2023-01-13-all-git-repos
+      // testRepoA-git-repo-2023-01-13.tar.gz
+      // testRepoB-git-repo-2023-01-13.tar.gz
+
+
 
 
 
