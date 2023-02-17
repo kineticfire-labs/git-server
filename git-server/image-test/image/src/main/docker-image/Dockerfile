@@ -1,13 +1,15 @@
 FROM alpine:3.16.1
 
 
-ENV GIT_VERSION 2.36.3-r0
+# Setting minimum package version since Alpine repositories may drop older package versions
+ENV GIT_MIN_VERSION 2.36.3-r0
 
 ENV GOSU_VERSION 1.14
 
 
 RUN apk fix && \
-    apk --no-cache --update add git=$GIT_VERSION
+    apk --no-cache --update add \
+      git>$GIT_MIN_VERSION
 
 
 RUN set -eux; \ 

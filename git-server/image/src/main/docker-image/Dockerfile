@@ -1,15 +1,21 @@
 FROM alpine:3.16.1
 
 
-ENV GIT_VERSION 2.36.3-r0
-ENV GIT_DAEMON_VERSION 2.36.3-r0
-ENV GIT_LFS_VERSION 3.1.4-r5
+# Setting minimum package version since Alpine repositories may drop older package versions
+ENV GIT_MIN_VERSION 2.36.3-r0
+ENV GIT_DAEMON_MIN_VERSION 2.36.3-r0
+ENV GIT_LFS_MIN_VERSION 3.1.4-r5
 
 ENV GOSU_VERSION 1.14
 
 
 RUN apk fix && \
-    apk --no-cache --update add git=$GIT_VERSION git-daemon=$GIT_DAEMON_VERSION git-lfs=$GIT_LFS_VERSION less openssh && \
+    apk --no-cache --update add \
+      git>$GIT_MIN_VERSION \
+      git-daemon>$GIT_DAEMON_MIN_VERSION \
+      git-lfs>$GIT_LFS_MIN_VERSION \
+      less \
+      openssh && \
     git lfs install
 
 
