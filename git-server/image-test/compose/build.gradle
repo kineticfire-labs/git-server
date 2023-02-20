@@ -558,14 +558,14 @@ tasks.register( 'test' ) {
       String dateAfter = result.get( "out" )
 
 
-      // backup all repositories file present
+      // backup of all repositories file is present
       //    - output format:  <YYYY-MM-DD>-all-git-repos.tar.gz
       //    - will check for presence of file with date BEFORE and AFTER running the backup command, in the slight chance the command was executed around midnight and hence the date would be differ by a day
 
-      String backupDir = "/test-deploy/git-server/data"
+      String backupDir = projectDir.toString( ) + "/test-deploy/git-server/data"
       String backupFilePostfix = "-all-git-repos.tar.gz"
       String dateCurrent = dateBefore
-      String backupFile = projectDir.toString( ) + backupDir + "/" + dateCurrent + backupFilePostfix
+      String backupFile = backupDir + "/" + dateCurrent + backupFilePostfix
       def projectDir = project(':git-server:image-test:compose').getProjectDir( ).getAbsolutePath( )
 
       cmdArray = [ "ls", backupFile ]
@@ -581,7 +581,7 @@ tasks.register( 'test' ) {
 
             dateCurrent = dateAfter
 
-            backupFile = projectDir + backupDir + "/" + dateCurrent + backupFilePostfix
+            backupFile = backupDir + "/" + dateCurrent + backupFilePostfix
 
             cmdArray = [ "ls", backupFile ]
             result = exec( cmdArray )
@@ -603,17 +603,17 @@ tasks.register( 'test' ) {
 
 
       // untar and unzip backup of all repositories file
-      cmdArray = [ "tar", "xfv", backupFile, "-C", "backupDir" ]
+      cmdArray = [ "tar", "xfv", backupFile, "-C", backupDir ]
       result = exec( cmdArray )
 
       if ( result.get( "exitValue" ) == 0 ) {
 
          // Example format:
-         // YYYY-MM-DD-all-git-repos
-         //    testRepoA-git-repo-YYYY-MM-DD.tar.gz
-         //    testRepoB-git-repo-YYYY-MM-DD.tar.gz
+         // <YYYY-MM-DD>-all-git-repos
+         //    testRepoA-git-repo-<YYYY-MM-DD>.tar.gz
+         //    testRepoB-git-repo-<YYYY-MM-DD>.tar.gz
 
-         String extractDir = backupDir + "/" + dateCurrent + "/-all-git-repos"
+         String extractDir = backupDir + "/" + dateCurrent + "-all-git-repos"
          String backupFileRepoA = extractDir + "/testRepoA-git-repo-" + dateCurrent + ".tar.gz"
          String backupFileRepoB = extractDir + "/testRepoB-git-repo-" + dateCurrent + ".tar.gz"
 
@@ -625,14 +625,62 @@ tasks.register( 'test' ) {
             cmdArray = [ "ls", backupFileRepoB ]
             result = exec( cmdArray )
 
-            if ( result.get( "exitValue" ) != 0 ) {
-               Throwable t = new Throwable( "Could not untar and unzip backfile file for repository 'testRepoB' at " + backupFileRepoB + "'" )
-               throw new GradleScriptException( "Error untarring and unzipping repository 'testRepoB'", t )
+            if ( result.get( "exitValue" ) == 0 ) {
+
+
+               // testRepoA:  untar and unzip backup file
+               cmdArray = [ "tar", "xfv", backupFileRepoA, "-C", backupDir ]
+               result = exec( cmdArray )
+
+               if ( result.get( "exitValue" ) == 0 ) {
+
+                  cmdArray = [ "ls", backupDir + "/testRepoA/HEAD" ]
+                  result = exec( cmdArray )
+
+                  if ( result.get( "exitValue" ) == 0 ) {
+
+
+                     // testRepoB:  untar and unzip backup file
+                     cmdArray = [ "tar", "xfv", backupFileRepoB, "-C", backupDir ]
+                     result = exec( cmdArray )
+
+                     if ( result.get( "exitValue" ) == 0 ) {
+
+                        cmdArray = [ "ls", backupDir + "/testRepoB/HEAD" ]
+                        result = exec( cmdArray )
+
+                        if ( result.get( "exitValue" ) != 0 ) {
+                           Throwable t = new Throwable( "Expected contents not present for testRepoB backfile file '" + backupFile + "'" )
+                           throw new GradleScriptException( "Error for contents for backfile for testRepoB", t )
+                        }
+
+
+                     } else {
+                        Throwable t = new Throwable( "Could not untar and unzip testRepoB backfile file '" + backupFile + "'" )
+                        throw new GradleScriptException( "Error untarring and unzipping backfile for testRepoB", t )
+                     }
+
+
+                  } else {
+                     Throwable t = new Throwable( "Expected contents not present for testRepoA backfile file '" + backupFile + "'" )
+                     throw new GradleScriptException( "Error for contents for backfile for testRepoA", t )
+                  }
+
+
+               } else {
+                  Throwable t = new Throwable( "Could not untar and unzip testRepoA backfile file '" + backupFile + "'" )
+                  throw new GradleScriptException( "Error untarring and unzipping backfile for testRepoA", t )
+               }
+
+
+            } else {
+               Throwable t = new Throwable( "Backfile file for repository 'testRepoB' at " + backupFileRepoB + "' not present" )
+               throw new GradleScriptException( "Error untarring and unzipping backupfile of all repositories for 'testRepoB'", t )
             }
 
          } else {
-            Throwable t = new Throwable( "Could not untar and unzip backfile file for repository 'testRepoA' at " + backupFileRepoA + "'" )
-            throw new GradleScriptException( "Error untarring and unzipping repository 'testRepoA'", t )
+            Throwable t = new Throwable( "Backfile file for repository 'testRepoA' at " + backupFileRepoA + "' not present" )
+            throw new GradleScriptException( "Error untarring and unzipping backupfile of all repositories for 'testRepoA'", t )
          }
 
       } else {
