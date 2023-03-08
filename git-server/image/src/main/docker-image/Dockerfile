@@ -1,7 +1,7 @@
 FROM alpine:3.16.1
 
 
-# Setting minimum package version since Alpine repositories may drop older package versions
+# Setting minimum package version since Alpine repositories may drop older package versions.  Alternative approach to re-build exact image is to create a private repository of needed packages, and reference that repository.
 ENV GIT_MIN_VERSION 2.36.3-r0
 ENV GIT_DAEMON_MIN_VERSION 2.36.3-r0
 ENV GIT_LFS_MIN_VERSION 3.1.4-r5

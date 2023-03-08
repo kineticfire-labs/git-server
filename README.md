@@ -49,7 +49,7 @@ The 'backup-node' directory contains a template crontab and shell script for rem
 - Check that the crontab loaded
    - crontab -l
 
-Note:  To remove the crontab, use crontab -r
+Note: To remove the crontab, use crontab -r
 
 
 # License
